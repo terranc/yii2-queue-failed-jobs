@@ -1,6 +1,6 @@
 <?php
 
-namespace terranc\Yii2QueueFailedJob;
+namespace terranc\Yii2QueueFailedJobs;
 
 use yii\base\Behavior;
 use yii\queue\ExecEvent;
