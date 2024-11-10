@@ -17,7 +17,7 @@
     },
     "autoload": {
         "psr-4": {
-            "terranc\\Yii2QueueFailedJob\\": "src"
+            "terranc\\Yii2QueueFailedJobs\\": "src"
         }
     },
     "extra": {
