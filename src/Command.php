@@ -1,5 +1,5 @@
 <?php
-namespace terranc\Yii2QueueFailedJob\controllers;
+namespace terranc\Yii2QueueFailedJobs;
 
 use yii\console\Controller;
 use yii\console\ExitCode;
@@ -9,8 +9,9 @@ use yii\helpers\Console;
 /**
  * 管理失败的队列任务
  */
-class FailedQueueController extends Controller
+class Command extends Controller
 {
+
     public $defaultAction = 'list';
     protected $jobStartedAt;
     public $failedJobsTable = 'failed_jobs';
