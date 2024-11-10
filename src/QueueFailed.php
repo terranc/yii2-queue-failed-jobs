@@ -8,21 +8,15 @@ use yii\base\InvalidConfigException;
 use yii\console\Application as ConsoleApp;
 use yii\db\Connection;
 use yii\db\Query;
-use yii\di\Instance;
 use yii\helpers\Inflector;
 use yii\queue\JobInterface;
 
 class QueueFailed extends Component implements BootstrapInterface
 {
     /**
-     * @var Connection|array|string
-     */
-    public $db = 'db';
-
-    /**
      * @var string failed jobs table name
      */
-    public $failedJobsTable = '{{%queue_failed}}';
+    public $failedJobsTable = '{{%failed_jobs}}';
 
     /** @var string|array Queue component id */
     public $queue = 'queue';
@@ -36,28 +30,22 @@ class QueueFailed extends Component implements BootstrapInterface
      */
     public $commandOptions = [];
 
-    public function init()
-    {
-        $this->db = Instance::ensure($this->db, Connection::class);
-    }
-
     public function bootstrap($app)
     {
         // register console commands
         if ($app instanceof ConsoleApp) {
-            $app->controllerMap[$this->getCommandId()] = [
-                    'class' => $this->commandClass,
-                    'failedJobTable' => $this->failedJobsTable,
-                ] + $this->commandOptions;
+            $app->controllerMap[$this->getCommandId()] = array_merge([
+                'class' => $this->commandClass,
+                'failedJobsTable' => $this->failedJobsTable,
+            ], $this->commandOptions);
         }
 
         // attach behavior to each queue components
-        $queues = (array)$this->queue;
+        $queues = (array) $this->queue;
         foreach ($queues as $queue) {
             \Yii::$app->get($queue)->attachBehavior('queueFailed', [
                 'class' => SaveFailedJobsBehavior::class,
-                'failedJobTable' => $this->failedJobsTable,
-                'queue' => $queue,
+                'failedJobsTable' => $this->failedJobsTable,
             ]);
         }
     }

@@ -1,4 +1,5 @@
 <?php
+
 namespace terranc\Yii2QueueFailedJobs;
 
 use yii\console\Controller;
@@ -7,17 +8,32 @@ use yii\console\widgets\Table;
 use yii\helpers\Console;
 
 /**
- * 管理失败的队列任务
+ * Class Command
+ * @package terranc\queue\failed
+ * Handles failed queue jobs
  */
 class Command extends Controller
 {
 
     public $defaultAction = 'list';
     protected $jobStartedAt;
+    /**
+     * @var string
+     */
     public $failedJobsTable = 'failed_jobs';
 
     /**
-     * 显示所有失败的任务
+     * @var string Queue component ID
+     */
+    public $queue = 'queue';
+
+    /**
+     * @var string Table to store failed jobs
+     */
+    public $table = '{{%failed_jobs}}';
+
+    /**
+     * Lists all failed jobs
      */
     public function actionList()
     {
@@ -26,6 +42,7 @@ class Command extends Controller
 
         if (!$messages) {
             $this->stdout("没有找到失败的任务\n");
+
             return ExitCode::OK;
         }
 
@@ -36,7 +53,7 @@ class Command extends Controller
                 $message['id'],
                 $payload['data']['commandName'],
                 $message['queue_name'],
-                $this->formatDate($message['failed_at'])
+                $this->formatDate($message['failed_at']),
             ];
         }
 
@@ -50,14 +67,15 @@ class Command extends Controller
     }
 
     /**
-     * 显示任务详细信息
-     * @param string $id 任务ID
+     * Displays detailed information about a specific failed job
+     * @param  string  $id  Job ID
      */
     public function actionInfo($id)
     {
         $message = $this->getMessageById($id);
         if (!$message) {
             $this->stdout("任务未找到\n", Console::FG_RED);
+
             return ExitCode::UNSPECIFIED_ERROR;
         }
 
@@ -97,8 +115,9 @@ class Command extends Controller
     }
 
     /**
-     * 执行指定ID的任务，传`all`表示所有任务
-     * @param $id 任务ID
+     * Executes a specific failed job, or all if 'all' is passed
+     * @param $id Job ID or 'all'
+     * @return int
      */
     public function actionRetry($id)
     {
@@ -106,10 +125,12 @@ class Command extends Controller
             $message = $this->getMessageById($id);
             if (!$message) {
                 $this->stdout("任务未找到\n", Console::FG_RED);
+
                 return ExitCode::UNSPECIFIED_ERROR;
             }
 
             $this->execute($message);
+
             return ExitCode::OK;
         } elseif ($id === 'all') {
             return $this->actionRetryAll();
@@ -117,7 +138,8 @@ class Command extends Controller
     }
 
     /**
-     * 重试所有失败的任务
+     * Executes all failed jobs
+     * @return int
      */
     protected function actionRetryAll()
     {
@@ -126,6 +148,7 @@ class Command extends Controller
 
         if (!$messages) {
             $this->stdout("没有找到失败的任务\n");
+
             return ExitCode::OK;
         }
 
@@ -152,9 +175,30 @@ class Command extends Controller
     }
 
     /**
-     * 清除失败任务
+     * Deletes a specific failed job
+     * @param  string  $id  Job ID
+     * @return int
      */
-    public function actionClear()
+    public function actionDelete($id)
+    {
+        $message = $this->getMessageById($id);
+        if (!$message) {
+            $this->stdout("任务未找到\n", Console::FG_RED);
+
+            return ExitCode::UNSPECIFIED_ERROR;
+        }
+        $query = \Yii::$app->db->createCommand();
+        $query->delete($this->failedJobsTable, ['id' => $id])->execute();
+        $this->stdout("Job was removed", Console::FG_GREEN);
+        $this->stdout(PHP_EOL);
+
+        return ExitCode::OK;
+    }
+
+    /**
+     * Deletes all failed jobs
+     */
+    public function actionFlush()
     {
         $query = \Yii::$app->db->createCommand();
         $count = $query->delete($this->failedJobsTable)->execute();
@@ -195,9 +239,11 @@ class Command extends Controller
                 ->execute();
 
             $this->logDone($message);
+
             return true;
         } catch (\Throwable $e) {
             $this->logError($message, $e);
+
             return false;
         }
     }
@@ -215,7 +261,7 @@ class Command extends Controller
     {
         $payload = json_decode($message['payload'], true);
         $duration = number_format(round(microtime(true) - $this->jobStartedAt, 3), 3);
-        $memory = round(memory_get_peak_usage(false)/1024/1024, 2);
+        $memory = round(memory_get_peak_usage(false) / 1024 / 1024, 2);
 
         $this->stdout(date('Y-m-d H:i:s'), Console::FG_YELLOW);
         $this->stdout(" [{$message['id']}] {$payload['data']['commandName']}", Console::FG_GREY);

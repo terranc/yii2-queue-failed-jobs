@@ -8,7 +8,10 @@ use yii\queue\Queue;
 
 class SaveFailedJobsBehavior extends Behavior
 {
-    public $failedJobTable = 'failed_jobs';
+    /**
+     * @var string table name
+     */
+    public $failedJobsTable = 'failed_jobs';
 
     public function events()
     {
@@ -18,7 +21,7 @@ class SaveFailedJobsBehavior extends Behavior
     }
 
     /**
-     * @param ExecEvent $event
+     * @param  ExecEvent  $event
      */
     public function afterError(ExecEvent $event)
     {
@@ -39,7 +42,7 @@ class SaveFailedJobsBehavior extends Behavior
                 'pushedAt' => number_format(microtime(true), 4, '.', ''),
             ];
 
-            \Yii::$app->db->createCommand()->insert($this->failedJobTable, [
+            \Yii::$app->db->createCommand()->insert($this->failedJobsTable, [
                 'driver' => get_class($event->sender),
                 'queue_name' => $event->sender->queueName,
                 'payload' => json_encode($payload),
