@@ -1,0 +1,28 @@
+{
+    "name": "terranc/yii2-queue-failed-jobs",
+    "description": "Failed job handling for Yii2 Queue",
+    "type": "yii2-extension",
+    "keywords": ["yii2", "queue", "failed jobs"],
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "Terranc",
+            "email": "terranc@example.com"
+        }
+    ],
+    "require": {
+        "php": ">=5.6.0",
+        "yiisoft/yii2": "~2.0.0",
+        "yiisoft/yii2-queue": "^2.3"
+    },
+    "autoload": {
+        "psr-4": {
+            "terranc\\Yii2QueueFailedJob\\": "src"
+        }
+    },
+    "extra": {
+        "branch-alias": {
+            "dev-master": "1.0.x-dev"
+        }
+    }
+}
