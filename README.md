@@ -1,6 +1,6 @@
 # Yii2 Queue Failed Jobs
 
-这个扩展为 Yii2 Queue 提供了失败任务处理功能。
+This extension provides failed job handling functionality for [Yii2 Queue](https://github.com/yiisoft/yii2-queue).
 
 ## Install
 ```
