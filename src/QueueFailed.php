@@ -41,7 +41,7 @@ class QueueFailed extends Component implements BootstrapInterface
                 [
                     "class" => $this->commandClass,
                     "failedJobsTable" => $this->failedJobsTable,
-                    "connection" => $this->connection,
+                    ,
                 ],
                 $this->commandOptions,
             );
