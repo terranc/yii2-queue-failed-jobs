@@ -16,11 +16,14 @@ class QueueFailed extends Component implements BootstrapInterface
     /**
      * @var string failed jobs table name
      */
-    public $failedJobsTable = '{{%failed_jobs}}';
+    public $failedJobsTable = "{{%failed_jobs}}";
 
     /** @var string|array Queue component id */
-    public $queue = 'queue';
-
+    public $queue = "queue";
+    /**
+     * @var string database connection component id
+     */
+    public $connection = "db";
     /**
      * @var string command class name
      */
@@ -34,22 +37,26 @@ class QueueFailed extends Component implements BootstrapInterface
     {
         // register console commands
         if ($app instanceof ConsoleApp) {
-            $app->controllerMap[$this->getCommandId()] = array_merge([
-                'class' => $this->commandClass,
-                'failedJobsTable' => $this->failedJobsTable,
-            ], $this->commandOptions);
+            $app->controllerMap[$this->getCommandId()] = array_merge(
+                [
+                    "class" => $this->commandClass,
+                    "failedJobsTable" => $this->failedJobsTable,
+                    "connection" => $this->connection,
+                ],
+                $this->commandOptions,
+            );
         }
 
         // attach behavior to each queue components
         $queues = (array) $this->queue;
         foreach ($queues as $queue) {
-            \Yii::$app->get($queue)->attachBehavior('queueFailed', [
-                'class' => SaveFailedJobsBehavior::class,
-                'failedJobsTable' => $this->failedJobsTable,
+            \Yii::$app->get($queue)->attachBehavior("queueFailed", [
+                "class" => SaveFailedJobsBehavior::class,
+                "failedJobsTable" => $this->failedJobsTable,
+                "connection" => $this->connection,
             ]);
         }
     }
-
 
     /**
      * @return string command id
@@ -62,6 +69,8 @@ class QueueFailed extends Component implements BootstrapInterface
                 return Inflector::camel2id($id);
             }
         }
-        throw new InvalidConfigException('QueueFailed must be an application component.');
+        throw new InvalidConfigException(
+            "QueueFailed must be an application component.",
+        );
     }
 }

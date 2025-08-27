@@ -11,12 +11,17 @@ class SaveFailedJobsBehavior extends Behavior
     /**
      * @var string table name
      */
-    public $failedJobsTable = 'failed_jobs';
+    public $failedJobsTable = "failed_jobs";
+
+    /**
+     * @var string database connection component id
+     */
+    public $connection = "db";
 
     public function events()
     {
         return [
-            Queue::EVENT_AFTER_ERROR => 'afterError',
+            Queue::EVENT_AFTER_ERROR => "afterError",
         ];
     }
 
@@ -27,28 +32,40 @@ class SaveFailedJobsBehavior extends Behavior
     {
         if (!$event->retry) {
             $jobClass = get_class($event->job);
-//            $jobProperties = get_object_vars($event->job);
+            //            $jobProperties = get_object_vars($event->job);
 
             // 构建更丰富的 payload
             $payload = [
-                'data' => [
-                    'command' => serialize($event->job),
-                    'commandName' => $jobClass,
-//                    'properties' => $jobProperties,
+                "data" => [
+                    "command" => serialize($event->job),
+                    "commandName" => $jobClass,
+                    //                    'properties' => $jobProperties,
                 ],
-                'maxTries' => $event->attempt,
-                'queue' => $event->sender->queueName,
-                'id' => $event->id,
-                'pushedAt' => number_format(microtime(true), 4, '.', ''),
+                "maxTries" => $event->attempt,
+                "queue" => $event->sender->queueName,
+                "id" => $event->id,
+                "pushedAt" => number_format(microtime(true), 4, ".", ""),
             ];
 
-            \Yii::$app->db->createCommand()->insert($this->failedJobsTable, [
-                'driver' => get_class($event->sender),
-                'queue_name' => $event->sender->queueName,
-                'payload' => json_encode($payload),
-                'exception' => $event->error->getMessage() . ' in ' . $event->error->getFile() . ':' . $event->error->getLine() . "\n" . "\n" . $event->error->getTraceAsString(),
-                'failed_at' => date('Y-m-d H:i:s'),
-            ])->execute();
+            \Yii::$app
+                ->get($this->connection)
+                ->createCommand()
+                ->insert($this->failedJobsTable, [
+                    "driver" => get_class($event->sender),
+                    "queue_name" => $event->sender->queueName,
+                    "payload" => json_encode($payload),
+                    "exception" =>
+                        $event->error->getMessage() .
+                        " in " .
+                        $event->error->getFile() .
+                        ":" .
+                        $event->error->getLine() .
+                        "\n" .
+                        "\n" .
+                        $event->error->getTraceAsString(),
+                    "failed_at" => date("Y-m-d H:i:s"),
+                ])
+                ->execute();
         }
     }
 }
